@@ -1,0 +1,58 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pytorch-training
+  namespace: ml-training
+  labels:
+    project: mlops-pytorch-pipeline
+    component: training
+spec:
+  backoffLimit: 2
+  # Keep finished pods around for a day so `kubectl logs` still works when
+  # collecting evidence after the run.
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        project: mlops-pytorch-pipeline
+        component: training
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+      containers:
+        - name: trainer
+          image: mlops-train:v1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TRAINING_CONFIG
+              value: /app/configs/training_config.yaml
+            - name: PYTHONUNBUFFERED
+              value: "1"
+          volumeMounts:
+            - name: training-config
+              mountPath: /app/configs
+              readOnly: true
+            - name: data
+              mountPath: /app/data
+            - name: checkpoints
+              mountPath: /app/checkpoints
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+      volumes:
+        - name: training-config
+          configMap:
+            name: training-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: data-pvc
+        - name: checkpoints
+          persistentVolumeClaim:
+            claimName: checkpoints-pvc

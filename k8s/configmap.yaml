@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: training-config
+  namespace: ml-training
+  labels:
+    project: mlops-pytorch-pipeline
+data:
+  training_config.yaml: |
+    model:
+      architecture: resnet18
+      num_classes: 10
+    training:
+      epochs: 10
+      batch_size: 64
+      learning_rate: 0.001
+      early_stopping_patience: 3
+    data:
+      dataset: cifar10
+      data_dir: /app/data
+      num_workers: 2
+    output:
+      checkpoint_dir: /app/checkpoints
+      model_name: classifier_v1.pt
+---
+# Non-sensitive runtime settings for the serving Deployment.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: serving-config
+  namespace: ml-training
+  labels:
+    project: mlops-pytorch-pipeline
+data:
+  CHECKPOINT_DIR: /app/checkpoints
+  MODEL_NAME: classifier_v1.pt
+  TOP_K: "5"
+  LOG_LEVEL: info

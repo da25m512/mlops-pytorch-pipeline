@@ -1,0 +1,32 @@
+# Persistent storage shared between the training Job and the serving pods.
+#
+# `data-pvc` holds the downloaded dataset so re-runs skip the download.
+# `checkpoints-pvc` carries the trained weights from the Job to the Deployment,
+# which mounts it read-only.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-pvc
+  namespace: ml-training
+  labels:
+    project: mlops-pytorch-pipeline
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: checkpoints-pvc
+  namespace: ml-training
+  labels:
+    project: mlops-pytorch-pipeline
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi

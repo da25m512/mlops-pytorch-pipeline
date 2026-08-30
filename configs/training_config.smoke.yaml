@@ -1,0 +1,22 @@
+# Fast configuration used by CI and by the local Docker verification run.
+# Trains the small CNN on a 2000-sample subset for two epochs so the whole
+# build-train-serve loop finishes in a couple of minutes on CPU.
+model:
+  architecture: simple_cnn
+  num_classes: 10
+
+training:
+  epochs: 2
+  batch_size: 64
+  learning_rate: 0.002
+  early_stopping_patience: 2
+
+data:
+  dataset: cifar10
+  data_dir: /app/data
+  num_workers: 2
+  subset_size: 2000
+
+output:
+  checkpoint_dir: /app/checkpoints
+  model_name: classifier_v1.pt
