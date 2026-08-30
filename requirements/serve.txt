@@ -1,0 +1,10 @@
+# Inference dependencies only - no tensorboard, no training-side tooling.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+torch==2.5.1
+torchvision==0.20.1
+numpy==2.1.3
+Pillow==11.0.0
+fastapi==0.115.6
+uvicorn==0.34.0
+python-multipart==0.0.20

@@ -1,0 +1,10 @@
+# Training dependencies. Versions are pinned so image builds are reproducible.
+# The CPU wheel index keeps the image small; drop --extra-index-url and use the
+# default index when building for CUDA nodes.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+torch==2.5.1
+torchvision==0.20.1
+numpy==2.1.3
+PyYAML==6.0.2
+Pillow==11.0.0
