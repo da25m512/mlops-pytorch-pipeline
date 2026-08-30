@@ -1,0 +1,39 @@
+# Multi-stage build for the inference service.
+#
+# Only requirements/serve.txt is installed, so the training-side tooling
+# (tensorboard and friends) never reaches the runtime image.
+
+# ---------- Stage 1: dependencies ----------
+FROM python:3.11-slim AS base
+
+ENV PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+WORKDIR /app
+
+COPY requirements/serve.txt ./requirements/serve.txt
+RUN pip install --no-cache-dir -r requirements/serve.txt
+
+# ---------- Stage 2: serving runtime ----------
+FROM base AS serving
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app/src \
+    CHECKPOINT_DIR=/app/checkpoints \
+    MODEL_NAME=classifier_v1.pt
+
+COPY src/model.py src/dataset.py src/serve.py ./src/
+
+RUN mkdir -p /app/checkpoints \
+ && useradd --create-home --uid 10001 --shell /usr/sbin/nologin appuser \
+ && chown -R appuser:appuser /app
+
+USER appuser
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=4).status == 200 else 1)"
+
+CMD ["uvicorn", "serve:app", "--app-dir", "src", "--host", "0.0.0.0", "--port", "8080"]
