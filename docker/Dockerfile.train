@@ -1,0 +1,40 @@
+# Multi-stage build for the training workload.
+#
+# Stage 1 (base)     installs the pinned dependencies. It changes only when
+#                    requirements/train.txt changes, so the expensive torch
+#                    download is cached across source-only rebuilds.
+# Stage 2 (training) adds the source and config. Rebuilds are seconds.
+
+# ---------- Stage 1: dependencies ----------
+FROM python:3.11-slim AS base
+
+ENV PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+WORKDIR /app
+
+COPY requirements/train.txt ./requirements/train.txt
+RUN pip install --no-cache-dir -r requirements/train.txt
+
+# ---------- Stage 2: training runtime ----------
+FROM base AS training
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app/src \
+    TORCH_HOME=/app/data/.torch
+
+COPY src/ ./src/
+COPY configs/ ./configs/
+
+# Dataset downloads and checkpoints are written to mounted volumes, not the
+# image layer. Created here so the paths exist even when nothing is mounted.
+RUN mkdir -p /app/data /app/checkpoints
+
+# Training runs as a batch Job; a non-root user keeps it consistent with the
+# serving image and avoids root-owned files on the mounted volumes.
+RUN useradd --create-home --uid 10001 trainer \
+ && chown -R trainer:trainer /app
+USER trainer
+
+ENTRYPOINT ["python", "src/train.py"]
