@@ -1,0 +1,23 @@
+# Hyperparameters for the training job.
+#
+# In Kubernetes this file is supplied by the `training-config` ConfigMap and
+# mounted at /app/configs. Locally, src/train.py falls back to this copy.
+model:
+  architecture: resnet18   # resnet18 | simple_cnn
+  num_classes: 10
+
+training:
+  epochs: 10
+  batch_size: 64
+  learning_rate: 0.001
+  early_stopping_patience: 3
+
+data:
+  dataset: cifar10
+  data_dir: /app/data
+  num_workers: 2
+  # subset_size: 2000      # uncomment to truncate both splits for a fast run
+
+output:
+  checkpoint_dir: /app/checkpoints
+  model_name: classifier_v1.pt
