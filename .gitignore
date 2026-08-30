@@ -1,0 +1,39 @@
+# Datasets and trained artifacts are volume-mounted, never committed.
+data/
+checkpoints/
+*.pt
+*.pth
+*.onnx
+
+# Secrets. Only .env.example is tracked.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+kubeconfig
+kubeconfig-*
+secrets.yaml
+*-secret.yaml
+!k8s/secret.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.eggs/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+
+# Local scratch
+scratch/
+tmp/
