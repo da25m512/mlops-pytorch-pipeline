@@ -1,0 +1,65 @@
+# GPU variant of the training Job (bonus). Requires the NVIDIA device plugin on
+# the cluster; scheduled onto GPU nodes via nodeSelector and a matching
+# toleration for the taint those nodes usually carry.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pytorch-training-gpu
+  namespace: ml-training
+  labels:
+    project: mlops-pytorch-pipeline
+    component: training
+    accelerator: nvidia
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        project: mlops-pytorch-pipeline
+        component: training
+        accelerator: nvidia
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        accelerator: nvidia-gpu
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: trainer
+          image: mlops-train:v1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TRAINING_CONFIG
+              value: /app/configs/training_config.yaml
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: all
+          volumeMounts:
+            - name: training-config
+              mountPath: /app/configs
+              readOnly: true
+            - name: data
+              mountPath: /app/data
+            - name: checkpoints
+              mountPath: /app/checkpoints
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+              nvidia.com/gpu: 1
+            limits:
+              cpu: "4"
+              memory: 8Gi
+              nvidia.com/gpu: 1
+      volumes:
+        - name: training-config
+          configMap:
+            name: training-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: data-pvc
+        - name: checkpoints
+          persistentVolumeClaim:
+            claimName: checkpoints-pvc
